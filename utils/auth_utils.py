@@ -11,5 +11,3 @@ def admin_required(fn):
             return jsonify({"error": "Accès refusé: droits administrateur requis"}), 403
         return fn(*args, **kwargs)
     return wrapper
-def toto(x):
-    return 0

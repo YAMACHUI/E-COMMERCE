@@ -24,7 +24,7 @@ from flask_jwt_extended import (
     create_refresh_token,
     get_jwt_identity, 
     get_jwt)
-from utils.auth_utils import admin_required,toto
+from utils.auth_utils import admin_required
 
 app=Flask(__name__)
 app.config['JWT_SECRET_KEY']= 'votre_cle_secrete_tres_complex' # À changer en production
@@ -205,7 +205,6 @@ def get_one_product(product_id):
 @app.route('/products', methods=['POST'])
 @jwt_required() 
 @admin_required
-@toto
 def create_product():
     db_session = Session()
     try:
