@@ -27,7 +27,7 @@ from utils.auth_utils import admin_required
 
 app=Flask(__name__)
 app.config['JWT_SECRET_KEY']= 'votre_cle_secrete_tres_complex' # À changer en production
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=30) 
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=20) 
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=1)
 
 jwt = JWTManager(app)
