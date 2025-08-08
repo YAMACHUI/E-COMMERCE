@@ -21,7 +21,6 @@ from flask_jwt_extended import (
     JWTManager,
     jwt_required,
     create_access_token,
-    create_refresh_token,
     get_jwt_identity, 
     get_jwt)
 from utils.auth_utils import admin_required
