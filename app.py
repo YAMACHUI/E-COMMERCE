@@ -3,6 +3,7 @@ from sqlalchemy import create_engine,inspect
 from sqlalchemy.orm import sessionmaker,scoped_session
 from models.product import Product
 from models.base import Base
+from models.cart import Cart, CartItem
 from services.product_service import ProductService
 from services.category_service import CategoryService
 from services.user_service import UserService
@@ -15,20 +16,22 @@ from Validator.product_validator import ProductValidator
 from models.user import User
 from controllers.user_controller import UserController
 from controllers.auth_controller import AuthController
+from controllers.cart_controller import CartController 
 from datetime import timedelta
 from sqlalchemy import desc
 from flask_jwt_extended import (
     JWTManager,
     jwt_required,
     create_access_token,
+    create_refresh_token,
     get_jwt_identity, 
     get_jwt)
 from utils.auth_utils import admin_required
 
 app=Flask(__name__)
 app.config['JWT_SECRET_KEY']= 'votre_cle_secrete_tres_complex' # À changer en production
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=20) 
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=1)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=45) 
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=5)
 
 jwt = JWTManager(app)
 
@@ -49,6 +52,8 @@ Session = scoped_session(sessionmaker(bind=engine))
 
 Base.metadata.create_all(engine)
 
+
+
 inspector = inspect(engine)
 tables = inspector.get_table_names()
 
@@ -67,6 +72,12 @@ print("Tables after creation:", tables)
 
 def make_response(data, status_code=200):
     return jsonify(data), status_code
+
+@app.route('/')
+def home():
+
+    return "API E-Commerce en marche! Accédez à /products"
+
 
 @app.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)  # Nécessite un refresh token valide
@@ -94,6 +105,7 @@ def refresh():
         return jsonify({"error": str(e)}), 500
     finally:
         db_session.close()
+
 @app.route('/login', methods=['POST'])
 def login():
     db_session = Session()
@@ -104,11 +116,6 @@ def login():
         return jsonify({"error": str(e)}), 500
     finally:
         db_session.close()
-
-@app.route('/')
-def home():
-
-    return "API E-Commerce en marche! Accédez à /products"
 
 @app.route('/register', methods=['POST'])
 def create_user():
@@ -139,6 +146,42 @@ def delete_user(user_id):
     db_session = Session()
     controller = UserController(db_session)
     return controller.delete_user(user_id)
+
+@app.route('/cart', methods=['GET'])
+@jwt_required()
+def get_cart():
+    db_session=Session()
+    try:
+        current_user=get_jwt_identity()
+        claims=get_jwt()
+        user_id = claims.get("user_id")
+
+        if not user_id:
+             return jsonify({"error": "user_id manquant dans le token"}), 400
+        
+        return CartController.get_cart(db_session,user_id)
+    except Exception as e:
+        return jsonify ({"error": str(e)}), 500
+    finally:
+        db_session.close()
+
+@app.route('/cart/add', methods=['POST'])
+@jwt_required()
+def add_to_cart():
+    db_session = Session()
+    try:
+        return CartController.add_item(db_session)
+    finally:
+        db_session.close()
+    
+@app.route('/cart/remove', methods=['POST'])
+@jwt_required()
+def remove_from_cart():
+    db_session = Session()
+    try:
+        return CartController.remove_item(db_session)
+    finally:
+        db_session.close()
 
 @app.route('/products', methods=['GET'])
 @jwt_required()
