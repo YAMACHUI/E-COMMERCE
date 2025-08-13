@@ -31,7 +31,7 @@ class CategoryController:
     def get_all_categories(service: CategoryService):
         categories = service.get_all_categories()
         return jsonify([{
-            'id': c.category_id,
+            'category_id': c.category_id,
             'name': c.name,
             'description': c.description
         } for c in categories])
